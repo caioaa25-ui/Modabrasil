@@ -8,7 +8,10 @@ import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
 import Cart from './pages/Cart';
 import Auth from './pages/Auth';
-import Seller from './pages/Seller';
+import SellerDashboard from './pages/SellerDashboard';
+import Checkout from './pages/Checkout';
+import CustomerOrders from './pages/CustomerOrders';
+import AdminDashboard from './pages/AdminDashboard';
 
 export default function App() {
   return (
@@ -21,7 +24,10 @@ export default function App() {
               <Route path="/product/:id" element={<ProductDetails />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Auth />} />
-              <Route path="/seller" element={<Seller />} />
+              <Route path="/seller" element={<SellerDashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/orders" element={<CustomerOrders />} />
               <Route path="*" element={<Navigate to="/" />} />
             </Routes>
           </Layout>

@@ -2,11 +2,12 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { ShoppingCart, LogOut, User, Search } from 'lucide-react';
+import { ShoppingCart, LogOut, User, Search, Menu } from 'lucide-react';
 import { auth } from '../firebase';
+import InstallPWA from './InstallPWA';
 
 interface LayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
@@ -32,6 +33,11 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Ações */}
             <div className="flex items-center gap-4 text-sm font-medium text-dark">
+              {/* Botão de Instalar (Só aparece se disponível) */}
+              <div className="hidden md:block">
+                 <InstallPWA />
+              </div>
+
               <Link to="/cart" className="relative p-2">
                 <ShoppingCart size={24} />
                 {items.length > 0 && (
@@ -47,6 +53,9 @@ export default function Layout({ children }: LayoutProps) {
                   {profile?.role === 'seller' && (
                     <Link to="/seller" className="bg-dark text-white px-3 py-1 rounded hover:bg-blue-900">Parceiro</Link>
                   )}
+                  {profile?.role === 'admin' && (
+                    <Link to="/admin" className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">Admin</Link>
+                  )}
                   <button onClick={() => auth.signOut()}><LogOut size={20} /></button>
                 </div>
               ) : (
@@ -55,10 +64,13 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
           
-          {/* Busca Mobile */}
-          <div className="mt-3 md:hidden relative">
-             <input type="text" placeholder="Buscar..." className="w-full pl-3 pr-10 py-2 rounded shadow-sm border-none outline-none" />
-             <Search className="absolute right-3 top-2.5 text-gray-400" size={20} />
+          {/* Mobile Install & Search */}
+          <div className="md:hidden mt-3 flex gap-2">
+             <div className="relative flex-1">
+               <input type="text" placeholder="Buscar..." className="w-full pl-3 pr-10 py-2 rounded shadow-sm border-none outline-none" />
+               <Search className="absolute right-3 top-2.5 text-gray-400" size={20} />
+             </div>
+             <InstallPWA />
           </div>
         </div>
       </header>

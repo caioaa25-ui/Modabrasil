@@ -1,5 +1,5 @@
 import { db } from '../firebase';
-import { collection, getDocs, doc, setDoc, getDoc, query, where, addDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc, getDoc, query, where, addDoc, deleteDoc, updateDoc } from 'firebase/firestore';
 import { Product, UserProfile, Order } from '../types';
 
 // Produtos Dummy caso o banco esteja vazio
@@ -48,9 +48,26 @@ export const getProducts = async (): Promise<Product[]> => {
   }
 };
 
+export const addProduct = async (product: Product) => {
+  await addDoc(collection(db, "products"), product);
+};
+
+export const deleteProduct = async (productId: string) => {
+  await deleteDoc(doc(db, "products", productId));
+};
+
 export const getUserProfile = async (uid: string): Promise<UserProfile | null> => {
   const d = await getDoc(doc(db, "users", uid));
   return d.exists() ? d.data() as UserProfile : null;
+};
+
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+  const snap = await getDocs(collection(db, "users"));
+  return snap.docs.map(d => d.data() as UserProfile);
+};
+
+export const deleteUser = async (uid: string) => {
+  await deleteDoc(doc(db, "users", uid));
 };
 
 export const createUserProfile = async (user: UserProfile) => {
@@ -67,7 +84,6 @@ export const getOrdersBySeller = async (sellerId: string): Promise<Order[]> => {
     const q = query(collection(db, 'orders'), where('sellerId', '==', sellerId));
     const snap = await getDocs(q);
     const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
-    // Sort client-side to avoid index requirement for demo
     return list.sort((a, b) => b.createdAt - a.createdAt);
   } catch (e) {
     console.error(e);
@@ -80,7 +96,6 @@ export const getOrdersByCustomer = async (customerId: string): Promise<Order[]> 
     const q = query(collection(db, 'orders'), where('customerId', '==', customerId));
     const snap = await getDocs(q);
     const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as Order));
-    // Sort client-side to avoid index requirement for demo
     return list.sort((a, b) => b.createdAt - a.createdAt);
   } catch (e) {
     console.error(e);

@@ -1,10 +1,11 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Trash2 } from 'lucide-react';
 
 export default function Cart() {
   const { items, removeFromCart, total } = useCart();
+  const navigate = useNavigate();
 
   if (items.length === 0) return (
     <div className="text-center py-20">
@@ -34,7 +35,10 @@ export default function Cart() {
           <span>Total</span>
           <span>R$ {total.toFixed(2)}</span>
         </div>
-        <button className="w-full bg-primary text-white font-bold py-3 rounded hover:bg-green-700">
+        <button 
+          onClick={() => navigate('/checkout')}
+          className="w-full bg-primary text-white font-bold py-3 rounded hover:bg-green-700"
+        >
           Finalizar Compra
         </button>
       </div>
