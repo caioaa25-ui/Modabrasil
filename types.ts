@@ -1,15 +1,3 @@
-export type UserRole = 'admin' | 'seller' | 'customer';
-
-export interface UserProfile {
-  uid: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  approved: boolean; // For sellers
-  balance: number; // For sellers
-  createdAt: number;
-}
-
 export interface Product {
   id?: string;
   name: string;
@@ -19,7 +7,6 @@ export interface Product {
   colors: string[];
   stock: number;
   images: string[];
-  category?: string;
 }
 
 export interface CartItem extends Product {
@@ -29,29 +16,25 @@ export interface CartItem extends Product {
   quantity: number;
 }
 
-export type OrderStatus = 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
+export interface UserProfile {
+  uid: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'seller' | 'customer';
+  balance?: number;
+}
 
 export interface Order {
   id?: string;
   customerId: string;
   customerName: string;
-  sellerId?: string; // If bought through a seller
+  sellerId?: string;
   sellerName?: string;
   items: CartItem[];
   totalAmount: number;
-  commissionAmount: number; // 0 if no seller
-  status: OrderStatus;
-  trackingCode?: string;
+  commissionAmount: number;
+  status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: number;
   paymentMethod: 'pix' | 'card';
-}
-
-export interface Withdrawal {
-  id?: string;
-  sellerId: string;
-  sellerName: string;
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
-  pixKey: string;
-  createdAt: number;
+  trackingCode?: string;
 }
