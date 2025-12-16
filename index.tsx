@@ -8,8 +8,14 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+
+try {
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+} catch (error) {
+  console.error("Erro ao renderizar o app:", error);
+  rootElement.innerHTML = '<div style="padding: 20px; text-align: center;"><h1>Erro ao carregar</h1><p>Verifique o console para mais detalhes.</p></div>';
+}

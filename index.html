@@ -15,6 +15,20 @@
               primary: '#009c3b',
               secondary: '#ffdf00',
               dark: '#002776',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: '0' },
+                '100%': { opacity: '1' },
+              },
+              slideDown: {
+                '0%': { transform: 'translateY(-10px)', opacity: '0' },
+                '100%': { transform: 'translateY(0)', opacity: '1' },
+              }
+            },
+            animation: {
+              'in': 'fadeIn 0.2s ease-out',
+              'slide-in-from-top-2': 'slideDown 0.2s ease-out',
             }
           }
         }
@@ -30,21 +44,27 @@
         -ms-overflow-style: none;  /* IE and Edge */
         scrollbar-width: none;  /* Firefox */
       }
+      body {
+        background-color: #f3f4f6;
+      }
     </style>
-  <script type="importmap">
+<script type="importmap">
 {
   "imports": {
     "react/": "https://esm.sh/react@^19.2.3/",
     "react": "https://esm.sh/react@^19.2.3",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "firebase/": "https://esm.sh/firebase@^12.6.0/",
+    "firebase/": "https://esm.sh/firebase@^12.7.0/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1",
     "lucide-react": "https://esm.sh/lucide-react@^0.561.0",
-    "react-router-dom": "https://esm.sh/react-router-dom@^7.10.1"
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "vite": "https://esm.sh/vite@^7.3.0"
   }
 }
 </script>
 </head>
   <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
   </body>
 </html>

@@ -3,6 +3,8 @@ import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
+// Configuração FIXA do Firebase
+// Utilizando a API Key solicitada: AIzaSyCJHxvhexOdFNMqGro-YILNhKXl4SFRcw8
 const firebaseConfig = {
   apiKey: "AIzaSyCJHxvhexOdFNMqGro-YILNhKXl4SFRcw8",
   authDomain: "moda-brasil-9c792.firebaseapp.com",
