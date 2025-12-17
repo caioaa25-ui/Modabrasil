@@ -46,7 +46,12 @@ export default function SellerDashboard() {
 
   const copyLink = (productId: string) => {
     if (!user) return;
-    const link = `${window.location.origin}/#/product/${productId}?seller=${user.uid}`;
+    
+    // CORREÇÃO: Usa o href completo e remove apenas o hash para garantir que o caminho base (path) seja mantido.
+    // Isso evita o erro 404 em ambientes onde o app não está na raiz do domínio.
+    const baseUrl = window.location.href.split('#')[0];
+    const link = `${baseUrl}#/product/${productId}?seller=${user.uid}`;
+    
     navigator.clipboard.writeText(link);
     
     // Visual feedback

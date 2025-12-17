@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { ShoppingCart, LogOut, User, Search, Menu } from 'lucide-react';
@@ -14,6 +14,16 @@ export default function Layout({ children }: LayoutProps) {
   const { user, profile } = useAuth();
   const { items } = useCart();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Detector de Vendedor (Referral System)
+  useEffect(() => {
+    const sellerId = searchParams.get('seller');
+    if (sellerId) {
+      console.log('Referral detectado:', sellerId);
+      localStorage.setItem('referredSellerId', sellerId);
+    }
+  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-gray-100 font-sans">
