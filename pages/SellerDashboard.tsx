@@ -44,19 +44,56 @@ export default function SellerDashboard() {
     setWithdrawAmount('');
   };
 
-  const copyLink = (productId: string) => {
+  const copyLink = async (productId: string) => {
     if (!user) return;
     
-    // CORREÇÃO: Usa o href completo e remove apenas o hash para garantir que o caminho base (path) seja mantido.
-    // Isso evita o erro 404 em ambientes onde o app não está na raiz do domínio.
-    const baseUrl = window.location.href.split('#')[0];
-    const link = `${baseUrl}#/product/${productId}?seller=${user.uid}`;
+    // DEFINIÇÃO ROBUSTA DA URL BASE
+    // 1. URL de Produção do Firebase (Fallback Seguro)
+    const FIREBASE_APP_URL = "https://moda-brasil-9c792.web.app";
     
-    navigator.clipboard.writeText(link);
+    // 2. Tenta usar a URL atual, mas valida se é segura (http/https)
+    // Se estiver rodando em blob:, file:, ou localhost, forçamos a URL de produção para garantir que o link funcione externamente.
+    let baseUrl = FIREBASE_APP_URL;
     
-    // Visual feedback
-    setCopiedId(productId);
-    setTimeout(() => setCopiedId(null), 2000);
+    const currentProtocol = window.location.protocol;
+    const currentOrigin = window.location.origin;
+
+    // Se estivermos em um domínio válido HTTPS e não for blob/localhost, usamos ele
+    if (
+      currentProtocol.startsWith('http') && 
+      !currentOrigin.includes('localhost') && 
+      !currentOrigin.includes('127.0.0.1')
+    ) {
+      baseUrl = currentOrigin;
+    }
+
+    // 3. Constrói o Link Final
+    // Formato: https://dominio.com/#/product/123?seller=UID
+    const link = `${baseUrl}/#/product/${productId}?seller=${user.uid}`;
+    
+    // Tenta usar o compartilhamento nativo do celular (Share API)
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Moda Brasil',
+          text: 'Confira este produto incrível!',
+          url: link
+        });
+        return; // Se compartilhou com sucesso, não precisa copiar
+      } catch (err) {
+        console.log('Erro ao compartilhar ou cancelado', err);
+        // Se falhar (ex: usuário cancelou), faz o fallback para copiar
+      }
+    }
+
+    // Fallback: Copiar para área de transferência
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopiedId(productId);
+      setTimeout(() => setCopiedId(null), 2000);
+    } catch (err) {
+      alert(`Copie o link manualmente: ${link}`);
+    }
   };
 
   const totalSales = orders.length;
@@ -95,7 +132,7 @@ export default function SellerDashboard() {
              <div>
                 <p className="text-sm text-gray-700 font-medium">Área de Divulgação</p>
                 <p className="text-xs text-gray-500">
-                  Estes são os produtos disponíveis na loja. Copie o link e envie para seus clientes. 
+                  Estes são os produtos disponíveis na loja. Clique para compartilhar ou copiar o link.
                   A comissão é rastreada automaticamente.
                 </p>
              </div>
@@ -138,7 +175,7 @@ export default function SellerDashboard() {
                       </div>
                     </div>
 
-                    {/* Discrete Action Button */}
+                    {/* Action Button with Share/Copy logic */}
                     <button 
                       onClick={() => copyLink(product.id!)}
                       className={`mt-2 w-full py-2 px-2 rounded-md text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm ${
@@ -147,8 +184,8 @@ export default function SellerDashboard() {
                           : 'bg-blue-100 text-blue-900 hover:bg-blue-200'
                       }`}
                     >
-                      {isCopied ? <Check size={14} /> : <LinkIcon size={14} />}
-                      {isCopied ? 'Copiado!' : 'Copiar Link'}
+                      {isCopied ? <Check size={14} /> : <Share2 size={14} />}
+                      {isCopied ? 'Link Copiado!' : 'Compartilhar'}
                     </button>
                   </div>
                 </div>

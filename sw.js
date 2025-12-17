@@ -1,4 +1,4 @@
-const CACHE_NAME = 'moda-brasil-v1';
+const CACHE_NAME = 'moda-brasil-v2';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -29,8 +29,22 @@ self.addEventListener('activate', event => {
 });
 
 self.addEventListener('fetch', event => {
+  // Estratégia Network First para HTML (garante atualizações)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          return caches.match(event.request);
+        })
+    );
+    return;
+  }
+
+  // Estratégia Cache First para o resto (imagens, scripts estáticos)
   event.respondWith(
-    fetch(event.request)
-      .catch(() => caches.match(event.request))
+    caches.match(event.request)
+      .then(response => {
+        return response || fetch(event.request);
+      })
   );
 });

@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { getProducts, addProduct, deleteProduct, getAllUsers, deleteUser } from '../services/db';
+import { storage } from '../firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Product, UserProfile } from '../types';
-import { Trash2, Plus, Users, Package, Image as ImageIcon, Save, X } from 'lucide-react';
+import { Trash2, Plus, Users, Package, Image as ImageIcon, Save, X, Loader2, UploadCloud } from 'lucide-react';
 
 export default function AdminDashboard() {
   const { user, profile } = useAuth();
@@ -17,6 +19,7 @@ export default function AdminDashboard() {
 
   // Form State
   const [showAddModal, setShowAddModal] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [newProduct, setNewProduct] = useState<Partial<Product>>({
     name: '',
     description: '',
@@ -45,9 +48,43 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  // --- LÓGICA DE UPLOAD DE IMAGEM (100% HTTPS, SEM BLOB) ---
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingImage(true);
+    try {
+      // 1. Gera nome único
+      const fileName = `products/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9.]/g, '')}`;
+      const storageRef = ref(storage, fileName);
+      
+      // 2. Upload direto (sem preview local com createObjectURL)
+      await uploadBytes(storageRef, file);
+      
+      // 3. Pega URL Pública (HTTPS)
+      const downloadURL = await getDownloadURL(storageRef);
+      
+      // 4. Salva no estado
+      setNewProduct(prev => ({ ...prev, images: [downloadURL] }));
+      
+    } catch (error) {
+      console.error("Erro no upload:", error);
+      alert("Erro ao enviar imagem. Verifique sua conexão.");
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProduct.name || !newProduct.basePrice) return;
+    
+    // Validação de segurança: URL deve ser HTTPS
+    if (!newProduct.images?.[0] || !newProduct.images[0].startsWith('http')) {
+      alert("Por favor, faça upload de uma imagem válida.");
+      return;
+    }
 
     try {
       await addProduct(newProduct as Product);
@@ -235,22 +272,32 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* UPLOAD DE IMAGEM */}
               <div>
-                <label className="block text-sm font-bold mb-1">URL da Imagem</label>
+                <label className="block text-sm font-bold mb-1">Imagem do Produto</label>
+                
+                {/* Preview */}
+                {newProduct.images?.[0] && newProduct.images[0] !== '' && (
+                  <div className="mb-2 relative w-full h-40 bg-gray-50 rounded border flex items-center justify-center overflow-hidden">
+                    <img src={newProduct.images[0]} alt="Preview" className="h-full object-contain" />
+                  </div>
+                )}
+
+                {/* File Input */}
                 <div className="flex gap-2">
-                   <div className="bg-gray-100 p-2 rounded flex items-center justify-center text-gray-500">
-                     <ImageIcon size={20} />
-                   </div>
-                   <input 
-                    className="w-full border rounded p-2 text-sm"
-                    placeholder="Cole o link da foto (https://...)"
-                    value={newProduct.images?.[0]}
-                    onChange={e => setNewProduct({...newProduct, images: [e.target.value]})}
-                    required
-                  />
+                   <label className={`flex-1 flex items-center justify-center gap-2 border border-dashed border-gray-300 rounded p-3 cursor-pointer hover:bg-gray-50 transition ${uploadingImage ? 'opacity-50 pointer-events-none' : ''}`}>
+                     {uploadingImage ? <Loader2 className="animate-spin text-primary" /> : <UploadCloud className="text-gray-400" />}
+                     <span className="text-sm text-gray-600">{uploadingImage ? 'Enviando...' : 'Carregar Foto'}</span>
+                     <input 
+                       type="file" 
+                       accept="image/*" 
+                       onChange={handleImageUpload} 
+                       className="hidden"
+                     />
+                   </label>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
-                   Dica: Copie o endereço da imagem de um site ou use um serviço de hospedagem de imagens.
+                   A foto será salva no servidor e gerará um link público seguro (HTTPS).
                 </p>
               </div>
 
@@ -263,8 +310,12 @@ export default function AdminDashboard() {
                 />
               </div>
 
-              <button className="w-full bg-primary text-white font-bold py-3 rounded hover:bg-green-700 flex justify-center gap-2">
-                <Save size={20} /> Salvar Produto
+              <button 
+                type="submit"
+                disabled={uploadingImage}
+                className="w-full bg-primary text-white font-bold py-3 rounded hover:bg-green-700 flex justify-center gap-2 disabled:opacity-50"
+              >
+                {uploadingImage ? 'Aguarde...' : <><Save size={20} /> Salvar Produto</>}
               </button>
             </form>
           </div>

@@ -1,52 +1,66 @@
 import React, { useEffect, useState } from 'react';
-import { Download, Share, PlusSquare, X } from 'lucide-react';
+import { Download, Share, PlusSquare, X, MoreVertical } from 'lucide-react';
 
 export default function InstallPWA() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [showIOSInstructions, setShowIOSInstructions] = useState(false);
+  const [showInstructions, setShowInstructions] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
-    // Detect if already installed
-    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
+    // 1. Detecta se JÁ está instalado (Standalone)
+    const isInStandaloneMode = () => {
+      return (
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://')
+      );
+    };
+
+    if (isInStandaloneMode()) {
       setIsStandalone(true);
     }
 
-    // Detect iOS
+    // 2. Detecta iOS
     const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(ios);
 
-    // Capture install prompt for Android/Desktop
+    // 3. Captura o evento do Chrome/Android para instalação nativa
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
+      console.log("Evento de instalação capturado!");
     };
 
     window.addEventListener('beforeinstallprompt', handler);
+    
+    // Ouve quando o app é instalado com sucesso para sumir com o botão
+    window.addEventListener('appinstalled', () => {
+      setIsStandalone(true);
+      setDeferredPrompt(null);
+      setShowInstructions(false);
+    });
+
     return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const handleInstallClick = async () => {
-    if (isIOS) {
-      setShowIOSInstructions(true);
-    } else if (deferredPrompt) {
+    // Cenário A: Temos o prompt nativo do Chrome/Android capturado
+    if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
       }
-    } else {
-      // Fallback for when prompt isn't ready but not installed
-      alert('Para instalar, toque no menu do navegador e selecione "Adicionar à Tela Inicial".');
+      return;
     }
+
+    // Cenário B: Não temos prompt (iOS ou Android bloqueou/já descartou). Mostramos instruções.
+    setShowInstructions(true);
   };
 
-  // Don't show if already installed as app
+  // Se já estiver rodando como APP, não mostra nada
   if (isStandalone) return null;
-
-  // Show button if we have the prompt OR if it's iOS
-  if (!deferredPrompt && !isIOS) return null;
 
   return (
     <>
@@ -58,44 +72,70 @@ export default function InstallPWA() {
         Baixar App
       </button>
 
-      {/* Modal de Instruções para iOS */}
-      {showIOSInstructions && (
+      {/* Modal de Instruções (Genérico para iOS e Android Manual) */}
+      {showInstructions && (
         <div className="fixed inset-0 bg-black/80 z-[60] flex items-end sm:items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white w-full max-w-sm rounded-xl p-6 relative">
+          <div className="bg-white w-full max-w-sm rounded-xl p-6 relative shadow-2xl">
             <button 
-              onClick={() => setShowIOSInstructions(false)}
+              onClick={() => setShowInstructions(false)}
               className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
             >
               <X size={24} />
             </button>
             
             <div className="text-center mb-4">
-              <h3 className="text-lg font-bold text-gray-800">Instalar no iPhone</h3>
-              <p className="text-sm text-gray-500">Siga os passos abaixo:</p>
+              <h3 className="text-lg font-bold text-gray-800">
+                {isIOS ? 'Instalar no iPhone' : 'Instalar Aplicativo'}
+              </h3>
+              <p className="text-sm text-gray-500">
+                Este app não ocupa memória e funciona offline.
+              </p>
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <Share size={24} className="text-blue-500" />
-                <span className="text-sm font-medium">1. Toque no botão Compartilhar</span>
-              </div>
-              <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                <PlusSquare size={24} className="text-gray-700" />
-                <span className="text-sm font-medium">2. Selecione "Adicionar à Tela de Início"</span>
-              </div>
+              {isIOS ? (
+                // Instruções iOS
+                <>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Share size={24} className="text-blue-500" />
+                    <span className="text-sm font-medium">1. Toque no botão Compartilhar</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <PlusSquare size={24} className="text-gray-700" />
+                    <span className="text-sm font-medium">2. Selecione "Adicionar à Tela de Início"</span>
+                  </div>
+                </>
+              ) : (
+                // Instruções Android / Chrome (Fallback Manual)
+                <>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <MoreVertical size={24} className="text-gray-700" />
+                    <span className="text-sm font-medium">1. Toque no menu do navegador (três pontos)</span>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <Download size={24} className="text-gray-700" />
+                    <span className="text-sm font-medium">2. Selecione "Instalar aplicativo" ou "Adicionar à tela inicial"</span>
+                  </div>
+                </>
+              )}
             </div>
             
             <div className="mt-6 text-center">
               <button 
-                onClick={() => setShowIOSInstructions(false)}
+                onClick={() => setShowInstructions(false)}
                 className="text-primary font-bold text-sm"
               >
                 Entendi
               </button>
             </div>
             
-            {/* Seta indicativa para baixo (simulando a posição do botão share no Safari) */}
-            <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45 sm:hidden"></div>
+            {/* Setinha indicativa (apenas visual help) */}
+            {isIOS && (
+              <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45 sm:hidden"></div>
+            )}
+            {!isIOS && (
+               <div className="absolute top-[-8px] right-2 w-4 h-4 bg-white rotate-45 sm:hidden"></div>
+            )}
           </div>
         </div>
       )}
