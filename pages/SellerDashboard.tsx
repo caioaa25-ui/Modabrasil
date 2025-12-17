@@ -3,14 +3,13 @@ import { useAuth } from '../context/AuthContext';
 import { getOrdersBySeller, getProducts } from '../services/db';
 import { Order, Product } from '../types';
 import { useNavigate } from 'react-router-dom';
-import { Wallet, TrendingUp, AlertCircle, Link as LinkIcon, Copy, Share2, LayoutGrid, BarChart2, Check } from 'lucide-react';
+import { Wallet, TrendingUp, AlertCircle, Share2, LayoutGrid, BarChart2, Check } from 'lucide-react';
 
 export default function SellerDashboard() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<Order[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
   
@@ -33,7 +32,6 @@ export default function SellerDashboard() {
         const productsData = await getProducts();
         setProducts(productsData);
       }
-      setLoading(false);
     };
     fetchData();
   }, [user, profile, navigate]);
@@ -47,31 +45,11 @@ export default function SellerDashboard() {
   const copyLink = async (productId: string) => {
     if (!user) return;
     
-    // DEFINIÇÃO ROBUSTA DA URL BASE
-    // 1. URL de Produção do Firebase (Fallback Seguro)
-    const FIREBASE_APP_URL = "https://moda-brasil-9c792.web.app";
+    // --- GERAÇÃO DE LINK PADRÃO (HASH) ---
+    // Gera: https://seusite.com/#/product/123?seller=UID
+    const origin = window.location.origin;
+    const link = `${origin}/#/product/${productId}?seller=${user.uid}`;
     
-    // 2. Tenta usar a URL atual, mas valida se é segura (http/https)
-    // Se estiver rodando em blob:, file:, ou localhost, forçamos a URL de produção para garantir que o link funcione externamente.
-    let baseUrl = FIREBASE_APP_URL;
-    
-    const currentProtocol = window.location.protocol;
-    const currentOrigin = window.location.origin;
-
-    // Se estivermos em um domínio válido HTTPS e não for blob/localhost, usamos ele
-    if (
-      currentProtocol.startsWith('http') && 
-      !currentOrigin.includes('localhost') && 
-      !currentOrigin.includes('127.0.0.1')
-    ) {
-      baseUrl = currentOrigin;
-    }
-
-    // 3. Constrói o Link Final
-    // Formato: https://dominio.com/#/product/123?seller=UID
-    const link = `${baseUrl}/#/product/${productId}?seller=${user.uid}`;
-    
-    // Tenta usar o compartilhamento nativo do celular (Share API)
     if (navigator.share) {
       try {
         await navigator.share({
@@ -79,14 +57,12 @@ export default function SellerDashboard() {
           text: 'Confira este produto incrível!',
           url: link
         });
-        return; // Se compartilhou com sucesso, não precisa copiar
+        return; 
       } catch (err) {
         console.log('Erro ao compartilhar ou cancelado', err);
-        // Se falhar (ex: usuário cancelou), faz o fallback para copiar
       }
     }
 
-    // Fallback: Copiar para área de transferência
     try {
       await navigator.clipboard.writeText(link);
       setCopiedId(productId);
@@ -124,7 +100,6 @@ export default function SellerDashboard() {
         </div>
       </div>
 
-      {/* --- TAB: CATALOG (DEFAULT) --- */}
       {activeTab === 'catalog' && (
         <div className="animate-in fade-in">
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-6 flex items-start gap-3">
@@ -132,16 +107,14 @@ export default function SellerDashboard() {
              <div>
                 <p className="text-sm text-gray-700 font-medium">Área de Divulgação</p>
                 <p className="text-xs text-gray-500">
-                  Estes são os produtos disponíveis na loja. Clique para compartilhar ou copiar o link.
-                  A comissão é rastreada automaticamente.
+                  Estes são os produtos disponíveis na loja. Clique para compartilhar.
                 </p>
              </div>
           </div>
           
-          {/* GRID LAYOUT LIKE HOME PAGE */}
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {products.map(product => {
-              const commission = product.basePrice * 0.10; // 10% commission example
+              const commission = product.basePrice * 0.10; 
               const isCopied = copiedId === product.id;
 
               return (
@@ -149,7 +122,6 @@ export default function SellerDashboard() {
                   key={product.id} 
                   className="bg-white rounded-lg shadow-sm overflow-hidden flex flex-col relative border border-gray-100 hover:shadow-md transition-shadow"
                 >
-                  {/* Image Container */}
                   <div className="relative w-full pt-[100%] border-b border-gray-50 bg-white">
                     <img 
                       src={product.images[0] || 'https://via.placeholder.com/400x500?text=Sem+Imagem'} 
@@ -158,7 +130,6 @@ export default function SellerDashboard() {
                     />
                   </div>
 
-                  {/* Info */}
                   <div className="p-3 flex flex-col flex-1 justify-between">
                     <div>
                       <h3 className="text-xs text-gray-700 font-normal line-clamp-2 mb-2 h-[32px]">
@@ -175,7 +146,6 @@ export default function SellerDashboard() {
                       </div>
                     </div>
 
-                    {/* Action Button with Share/Copy logic */}
                     <button 
                       onClick={() => copyLink(product.id!)}
                       className={`mt-2 w-full py-2 px-2 rounded-md text-xs font-bold flex items-center justify-center gap-2 transition-colors shadow-sm ${
@@ -201,10 +171,8 @@ export default function SellerDashboard() {
         </div>
       )}
 
-      {/* --- TAB: FINANCIAL & STATS --- */}
       {activeTab === 'financial' && (
         <div className="space-y-6 animate-in fade-in">
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
               <div className="flex justify-between items-start">
@@ -240,7 +208,6 @@ export default function SellerDashboard() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Sales History */}
             <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6">
               <h3 className="font-bold mb-4 text-gray-800">Histórico de Vendas</h3>
               <div className="overflow-x-auto">
@@ -272,10 +239,7 @@ export default function SellerDashboard() {
                     {orders.length === 0 && (
                       <tr>
                         <td colSpan={4} className="p-8 text-center text-gray-400">
-                           Nenhuma venda realizada ainda.<br/>
-                           <button onClick={() => setActiveTab('catalog')} className="text-blue-600 underline mt-2">
-                             Comece a divulgar produtos
-                           </button>
+                           Nenhuma venda realizada ainda.
                         </td>
                       </tr>
                     )}
@@ -284,7 +248,6 @@ export default function SellerDashboard() {
               </div>
             </div>
 
-            {/* Withdrawal Request */}
             <div className="bg-white rounded-lg shadow-sm p-6 h-fit border border-gray-100">
               <h3 className="font-bold mb-4 text-gray-800 flex items-center gap-2">
                 <Wallet size={18} /> Solicitar Saque Pix

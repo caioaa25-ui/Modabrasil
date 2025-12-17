@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
@@ -12,6 +13,7 @@ import SellerDashboard from './pages/SellerDashboard';
 import Checkout from './pages/Checkout';
 import CustomerOrders from './pages/CustomerOrders';
 import AdminDashboard from './pages/AdminDashboard';
+import AffiliateDashboard from './pages/AffiliateDashboard';
 
 export default function App() {
   return (
@@ -26,6 +28,7 @@ export default function App() {
               <Route path="/login" element={<Auth />} />
               <Route path="/seller" element={<SellerDashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/affiliate" element={<AffiliateDashboard />} />
               <Route path="/checkout" element={<Checkout />} />
               <Route path="/orders" element={<CustomerOrders />} />
               <Route path="*" element={<Navigate to="/" />} />
