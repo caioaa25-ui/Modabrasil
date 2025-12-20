@@ -1,47 +1,82 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
-import { Link, useNavigate } from 'react-router-dom';
-import { Trash2 } from 'lucide-react';
 
-export default function Cart() {
-  const { items, removeFromCart, total } = useCart();
-  const navigate = useNavigate();
+interface CartProps {
+  onBack: () => void;
+}
 
-  if (items.length === 0) return (
-    <div className="text-center py-20">
-      <h2 className="text-xl font-bold">Seu carrinho está vazio</h2>
-      <Link to="/" className="text-primary font-bold mt-4 inline-block">Ver produtos</Link>
-    </div>
-  );
+export const Cart: React.FC<CartProps> = ({ onBack }) => {
+  const { cart, removeFromCart, total } = useCart();
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Carrinho</h1>
-      <div className="bg-white rounded shadow divide-y">
-        {items.map(item => (
-          <div key={item.cartId} className="p-4 flex gap-4">
-            <img src={item.images[0]} className="w-20 h-20 object-contain border rounded" />
-            <div className="flex-1">
-              <h3 className="font-bold">{item.name}</h3>
-              <p className="text-sm text-gray-500">{item.selectedColor} | {item.selectedSize}</p>
-              <p className="font-bold mt-1">R$ {item.basePrice.toFixed(2)}</p>
-            </div>
-            <button onClick={() => removeFromCart(item.cartId)} className="text-red-500"><Trash2 size={20}/></button>
-          </div>
-        ))}
-      </div>
-      <div className="mt-6 bg-white p-4 rounded shadow">
-        <div className="flex justify-between text-xl font-bold mb-4">
-          <span>Total</span>
-          <span>R$ {total.toFixed(2)}</span>
+    <div className="container mx-auto px-4 py-12 fade-in max-w-5xl">
+      <h2 className="text-4xl font-serif italic mb-12 text-center">Sua Sacola</h2>
+
+      {cart.length === 0 ? (
+        <div className="text-center py-20 bg-white border border-dashed border-gray-200">
+          <p className="text-gray-400 uppercase tracking-widest text-sm mb-8">Sua sacola está vazia.</p>
+          <button 
+            onClick={onBack}
+            className="bg-black text-white px-12 py-4 text-[10px] font-bold uppercase tracking-widest hover:bg-accent transition"
+          >
+            Continuar Comprando
+          </button>
         </div>
-        <button 
-          onClick={() => navigate('/checkout')}
-          className="w-full bg-primary text-white font-bold py-3 rounded hover:bg-green-700"
-        >
-          Finalizar Compra
-        </button>
-      </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          {/* Lista de Itens */}
+          <div className="lg:col-span-2 space-y-8">
+            {cart.map((item) => (
+              <div key={`${item.id}-${item.selectedSize}`} className="flex gap-6 border-b border-gray-100 pb-8">
+                <div className="w-24 h-32 bg-gray-50 flex-shrink-0">
+                  <img src={item.images[0]} className="w-full h-full object-cover" />
+                </div>
+                <div className="flex-grow flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold uppercase tracking-wide mb-1">{item.name}</h3>
+                    <p className="text-xs text-gray-500 uppercase tracking-widest mb-4">Tamanho: {item.selectedSize}</p>
+                    <p className="text-sm font-bold">R$ {item.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  </div>
+                  <button 
+                    onClick={() => removeFromCart(item.id, item.selectedSize)}
+                    className="text-[10px] text-gray-400 uppercase font-bold tracking-widest self-start hover:text-red-500 transition"
+                  >
+                    Remover
+                  </button>
+                </div>
+                <div className="text-sm font-bold">
+                  Qtd: {item.quantity}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Resumo do Pedido */}
+          <div className="bg-white p-8 border border-gray-100 h-fit sticky top-24 shadow-sm">
+            <h4 className="text-xs font-bold uppercase tracking-[0.2em] mb-8 border-b border-black pb-4">Resumo</h4>
+            <div className="space-y-4 mb-8">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Subtotal</span>
+                <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">Frete</span>
+                <span className="text-green-600 uppercase text-[10px] font-bold tracking-widest">Grátis</span>
+              </div>
+            </div>
+            <div className="flex justify-between font-bold text-lg mb-8 pt-4 border-t border-gray-100">
+              <span>Total</span>
+              <span>R$ {total.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+            </div>
+            <button className="w-full bg-black text-white py-5 text-[10px] font-bold uppercase tracking-widest hover:bg-accent transition shadow-xl">
+              Finalizar Pedido
+            </button>
+            <p className="text-[9px] text-gray-400 mt-6 text-center leading-relaxed">
+              Pagamento processado de forma segura via criptografia de ponta a ponta.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
+};

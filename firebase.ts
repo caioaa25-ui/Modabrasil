@@ -1,20 +1,19 @@
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
-// Configuração EXATA solicitada
+// Substitua pelo seu objeto de configuração do console do Firebase
 const firebaseConfig = {
-  apiKey: "AIzaSyCJHxvhexOdFNMqGro-YILNhKXl4SFRcw8",
-  authDomain: "moda-brasil-9c792.firebaseapp.com",
-  projectId: "moda-brasil-9c792",
-  storageBucket: "moda-brasil-9c792.appspot.com",
-  messagingSenderId: "33658624710",
-  appId: "1:33658624710:web:aca2e3fe3e007e4d3095c7"
+  apiKey: "SUA_API_KEY",
+  authDomain: "seu-projeto.firebaseapp.com",
+  projectId: "seu-projeto",
+  storageBucket: "seu-projeto.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "1:123456789:web:abcdef"
 };
 
 const app = initializeApp(firebaseConfig);
-
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const storage = getStorage(app);

@@ -1,41 +1,52 @@
-
-import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Layout } from './components/Layout';
+import { Home } from './pages/Home';
+import { Auth } from './pages/Auth';
+import { ProductDetails } from './pages/ProductDetails';
+import { Cart } from './pages/Cart';
 import { AuthProvider } from './context/AuthContext';
 import { CartProvider } from './context/CartContext';
-import Layout from './components/Layout';
+import { Product } from './types';
 
-import Home from './pages/Home';
-import ProductDetails from './pages/ProductDetails';
-import Cart from './pages/Cart';
-import Auth from './pages/Auth';
-import SellerDashboard from './pages/SellerDashboard';
-import Checkout from './pages/Checkout';
-import CustomerOrders from './pages/CustomerOrders';
-import AdminDashboard from './pages/AdminDashboard';
-import AffiliateDashboard from './pages/AffiliateDashboard';
+const App = () => {
+  const [currentPage, setCurrentPage] = useState<'home' | 'auth' | 'product' | 'cart'>('home');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-export default function App() {
+  const navigateToProduct = (product: any) => {
+    setSelectedProduct(product);
+    setCurrentPage('product');
+    window.scrollTo(0, 0);
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'home':
+        return <Home onProductClick={navigateToProduct} />;
+      case 'auth':
+        return <Auth onBack={() => setCurrentPage('home')} />;
+      case 'product':
+        return selectedProduct ? (
+          <ProductDetails product={selectedProduct} onBack={() => setCurrentPage('home')} />
+        ) : <Home onProductClick={navigateToProduct} />;
+      case 'cart':
+        return <Cart onBack={() => setCurrentPage('home')} />;
+      default:
+        return <Home onProductClick={navigateToProduct} />;
+    }
+  };
+
   return (
-    <HashRouter>
-      <AuthProvider>
-        <CartProvider>
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/product/:id" element={<ProductDetails />} />
-              <Route path="/cart" element={<Cart />} />
-              <Route path="/login" element={<Auth />} />
-              <Route path="/seller" element={<SellerDashboard />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/affiliate" element={<AffiliateDashboard />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/orders" element={<CustomerOrders />} />
-              <Route path="*" element={<Navigate to="/" />} />
-            </Routes>
-          </Layout>
-        </CartProvider>
-      </AuthProvider>
-    </HashRouter>
+    <AuthProvider>
+      <CartProvider>
+        <Layout 
+          onNavigate={(page) => setCurrentPage(page)} 
+          currentCount={0} // O Layout agora pega do contexto
+        >
+          {renderPage()}
+        </Layout>
+      </CartProvider>
+    </AuthProvider>
   );
-}
+};
+
+export default App;

@@ -1,71 +1,103 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { getProducts } from '../services/db';
+import React, { useState } from 'react';
 import { Product } from '../types';
 import { useCart } from '../context/CartContext';
-import { ShieldCheck, Truck } from 'lucide-react';
 
-export default function ProductDetails() {
-  const { id } = useParams();
-  const navigate = useNavigate();
+interface ProductDetailsProps {
+  product: Product;
+  onBack: () => void;
+}
+
+export const ProductDetails: React.FC<ProductDetailsProps> = ({ product, onBack }) => {
+  const [selectedSize, setSelectedSize] = useState<string>('');
+  const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
-  const [product, setProduct] = useState<Product | null>(null);
-  const [size, setSize] = useState('');
-  const [color, setColor] = useState('');
 
-  useEffect(() => {
-    getProducts().then(products => {
-      const p = products.find(i => i.id === id);
-      setProduct(p || null);
-    });
-  }, [id]);
-
-  if (!product) return <div className="p-10 text-center">Carregando...</div>;
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      alert('Por favor, selecione um tamanho.');
+      return;
+    }
+    addToCart(product, selectedSize);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 3000);
+  };
 
   return (
-    <div className="bg-white rounded-lg shadow p-4 md:flex gap-8">
-      <div className="md:w-2/3 flex justify-center bg-gray-50 rounded">
-        <img src={product.images[0]} alt={product.name} className="max-h-[400px] object-contain" />
-      </div>
-      <div className="md:w-1/3 mt-6 md:mt-0">
-        <h1 className="text-2xl font-bold text-gray-800 mb-2">{product.name}</h1>
-        <div className="text-3xl font-light text-gray-900 mb-2">R$ {product.basePrice.toFixed(2)}</div>
-        <p className="text-green-600 font-medium text-sm mb-6">em 10x R$ {(product.basePrice/10).toFixed(2)} sem juros</p>
+    <div className="container mx-auto px-4 py-12 fade-in">
+      <button 
+        onClick={onBack}
+        className="flex items-center gap-2 text-xs uppercase tracking-widest font-bold mb-12 hover:text-accent transition"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        Voltar para a loja
+      </button>
 
-        <div className="mb-4">
-          <p className="font-bold text-sm mb-2">Cor: {color}</p>
-          <div className="flex gap-2">
-            {product.colors.map(c => (
-              <button key={c} onClick={() => setColor(c)} className={`px-3 py-1 border rounded ${color === c ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-200'}`}>{c}</button>
-            ))}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+        {/* Galeria de Imagens */}
+        <div className="space-y-4">
+          <div className="aspect-[3/4] bg-gray-100 overflow-hidden">
+            <img 
+              src={product.images[0]} 
+              className="w-full h-full object-cover"
+              alt={product.name}
+            />
           </div>
         </div>
 
-        <div className="mb-6">
-          <p className="font-bold text-sm mb-2">Tamanho: {size}</p>
-          <div className="flex gap-2">
-            {product.sizes.map(s => (
-              <button key={s} onClick={() => setSize(s)} className={`px-3 py-1 border rounded ${size === s ? 'border-blue-600 bg-blue-50 text-blue-600' : 'border-gray-200'}`}>{s}</button>
-            ))}
+        {/* Informações do Produto */}
+        <div className="flex flex-col justify-center">
+          <span className="text-accent text-xs font-bold uppercase tracking-[0.3em] mb-4">{product.category}</span>
+          <h1 className="text-4xl md:text-5xl font-serif mb-6 leading-tight">{product.name}</h1>
+          <p className="text-2xl font-bold mb-8">R$ {product.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+          
+          <div className="h-[1px] bg-black/10 w-full mb-8"></div>
+          
+          <p className="text-gray-600 leading-relaxed mb-10">
+            {product.description}
+          </p>
+
+          <div className="mb-10">
+            <h4 className="text-xs font-bold uppercase tracking-widest mb-4">Selecione o Tamanho</h4>
+            <div className="flex gap-4">
+              {product.sizes.map(size => (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(size)}
+                  className={`w-12 h-12 flex items-center justify-center border text-xs font-bold transition-all duration-300
+                    ${selectedSize === size ? 'bg-black text-white border-black' : 'border-gray-300 hover:border-black'}`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <button 
-          onClick={() => {
-            if(!size || !color) return alert('Selecione as opções');
-            addToCart(product, size, color);
-            navigate('/cart');
-          }}
-          className="w-full bg-blue-600 text-white font-bold py-3 rounded hover:bg-blue-700 transition mb-4"
-        >
-          Comprar Agora
-        </button>
+          <button
+            onClick={handleAddToCart}
+            className={`w-full py-5 text-[10px] font-bold uppercase tracking-[0.2em] transition-all duration-500 shadow-xl
+              ${added ? 'bg-green-600 text-white' : 'bg-black text-white hover:bg-accent'}`}
+          >
+            {added ? 'Adicionado com Sucesso' : 'Adicionar ao Carrinho'}
+          </button>
 
-        <div className="text-sm text-gray-500 space-y-2">
-          <div className="flex gap-2 items-center"><Truck size={16} /> <span className="text-green-600 font-bold">Frete Grátis</span> para todo Brasil</div>
-          <div className="flex gap-2 items-center"><ShieldCheck size={16} /> Compra Garantida</div>
+          <div className="mt-12 space-y-4 text-[10px] uppercase tracking-widest font-semibold text-gray-500">
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+              Entrega Grátis acima de R$ 500,00
+            </div>
+            <div className="flex items-center gap-3">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Troca fácil em até 30 dias
+            </div>
+          </div>
         </div>
       </div>
     </div>
   );
-}
+};
